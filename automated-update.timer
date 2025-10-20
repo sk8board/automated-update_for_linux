@@ -1,0 +1,13 @@
+[Unit]
+Description=Automated Update Service Timer
+Requires=network-online.target
+After=network-online.target
+
+[Timer]
+OnCalendar=*-*-* 0/6:*:*
+OnStartupSec=10m
+RandomizedDelaySec=10m
+Persistent=true
+
+[Install]
+WantedBy=timers.target
