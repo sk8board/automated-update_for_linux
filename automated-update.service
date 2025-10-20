@@ -1,0 +1,13 @@
+[Unit]
+Description=utomated Update Service
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+CPUQuota=50%
+CPUWeight=20
+IOWeight=20
+ExecStart=/usr/lib/automated-update/automated-update.py
+Restart=on-failure
+RestartSec=60
