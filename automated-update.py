@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from pathlib import Path
 import subprocess
 import time
 
@@ -13,48 +14,44 @@ def main():
 		# 0 = internet connected
 		if check_internet() == 0:
 			
-			# check if application manager apt-get is present
-			subprocess.call(['echo', '***check for apt-get***'])
-			if subprocess.call(['/usr/bin/apt-get', '--version'])  == 0:
-						
+			# check if package manager apt-get is installed
+			if Path('/usr/bin/apt-get').exists() == True:
+										
 				# 0 = update completed
-				if process_apt_update() and process_apt_upgrade() and process_flatpak() == 0:
+				if process_apt_update() + process_apt_upgrade() + process_flatpak() == 0:
 					process_fwupdmgr()
 					subprocess.call(['echo', '***automated update complete***'])
 					exit(0)
 			
-				# server error, retry after delay	
+				# if update was not completed, retry after delay	
 				else:
-					server_error()
-				
-			# check if application manager dnf is present
-			subprocess.call(['echo', '***check for dnf***'])
-			elif subprocess.call(['/usr/bin/dnf', '--version'])  == 0:	
+					retry_update()
+			
+			# check if package manager dnf is installed
+			elif Path('/usr/bin/dnf').exists() == True:	
 				
 				# 0 = update completed
-				if process_dnf() and process_flatpak() == 0:
+				if process_dnf() + process_flatpak() == 0:
 					process_fwupdmgr()
 					subprocess.call(['echo', '***automated update complete***'])
 					exit(0)
 			
-				# server error, retry after delay	
+				# if update was not completed, r, retry after delay	
 				else:
-					server_error()
+					retry_update()
 
-
-			# check if application manager pacman is present
-			subprocess.call(['echo', '***check for pacman***'])
-			elif subprocess.call(['/usr/bin/pacman', '--version'])  == 0:	
+			# check if package manager pacman is installed
+			elif Path('/usr/bin/pacman').exists() == True:	
 				
 				# 0 = update completed
-				if process_pacman() and process_flatpak() == 0:
+				if process_pacman() + process_flatpak() == 0:
 					process_fwupdmgr()
 					subprocess.call(['echo', '***automated update complete***'])
 					exit(0)
 			
-				# server error, retry after delay	
+				# if update was not completed, retry after delay	
 				else:
-					server_error()
+					retry_update()
 			
 			
 		else:
@@ -66,7 +63,7 @@ def main():
 def check_internet():
 	
 	# check for a connection to internet, exit code 0 = connected
-	if subprocess.call(['/usr/bin/ping', '-c', '1', 'www.ubuntu.com']) == 0:  				
+	if subprocess.call(['/usr/bin/ping', '-c', '1', 'www.google.com']) == 0:  				
 		subprocess.call(['echo', '***connected to internet***'])
 		return 0
 		
@@ -74,14 +71,14 @@ def check_internet():
 		return 1
 
 
-def server_error():
+def retry_update():
 	
 	global counter
 	if counter > 2:
 		subprocess.call(['echo', '***service failed due to server error***'])
 		exit(1)
 	counter += 1
-	subprocess.call(['echo', '***server error, retry after delay***'])
+	subprocess.call(['echo', '***update was not completed, retry after delay***'])
 	time.sleep(600)
 
 
@@ -128,8 +125,15 @@ def process_apt_upgrade():
 def process_dnf():
 	
 	# get exit code for 'dnf check-upgrade', check if upgrades are available, 0 = no updates available
-	subprocess.call(['echo', '***dnf check available upgrades***'])
-	exit_code = subprocess.call(['/usr/bin/dnf', 'check-upgrade'])	
+	try:
+		subprocess.call(['echo', '***dnf check available upgrades***'])
+		exit_code = subprocess.call(['/usr/bin/dnf', 'check-upgrade'])	
+		#print('exit_code')
+		#print(exit_code)
+	except Exception as e:
+		print(e)
+		exit_code = 0
+	
 	
 	if exit_code == 0:
 		subprocess.call(['echo', '***dnf upgrades are not available at this time***'])
@@ -144,7 +148,7 @@ def process_dnf():
 		subprocess.call(['echo', '***dnf distro-sync***'])
 		subprocess.call(['/usr/bin/systemd-inhibit', '--why="Performing automatic updates"', '--who="Update Manager"', '--what=shutdown', '--mode=block', '/usr/bin/dnf', 'distro-sync', '-y'])	# provide the exit code of apt-get upgrade command
 		subprocess.call(['echo', '***dnf distro-sync has completed***'])
-		return 1		
+		return 0		
 
 
 def process_pacman():
@@ -155,8 +159,8 @@ def process_pacman():
 
 def process_flatpak():
 	
-	# check if flatpak is installed, if not installed, return 0
-	if subprocess.call(['/usr/bin/flatpak', '--version']) != 0:
+	# check if flatpak is installed
+	if Path('/usr/bin/flatpak').exists() == False:
 		subprocess.call(['echo', '***flatpak is not installed***'])
 		return 0
 	
@@ -168,7 +172,7 @@ def process_flatpak():
 	
 	if exit_code == 1:
 		subprocess.call(['echo', '***flatpak updates are not available at this time***'])
-		return 1
+		return 0
 		
 	else:
 		# uninstall unused flatpaks
@@ -185,8 +189,9 @@ def process_flatpak():
 def process_fwupdmgr():
 	
 	# check if updates are available
+	subprocess.call(['echo', '***fwupdmgr refresh --force***'])
 	subprocess.call(['/usr/bin/fwupdmgr', 'refresh', '--force'])
-	exit_code = subprocess.call(['/usr/bin/fwupdmgr', 'get-updates'])
+	exit_code = subprocess.call(['/usr/bin/fwupdmgr', 'get-updates', '-y'])
 	
 	# perform update if update is available, 0 = update available, 2 = no update available
 	if exit_code == 2:
@@ -195,11 +200,31 @@ def process_fwupdmgr():
 	
 	else:
 		# send notification that a firmware update is available
-		# look into fwupd.service, fwupd-refresh.timer, and fwupd-refresh.service as a better alternative
-		# subprocess.call(['/usr/bin/timeout', '-f', '-k', '1s', '10m', '/usr/bin/fwupdmgr', 'update', '-y'])
-		subprocess.call(['usr/bin/notify-send', '"Firmware Update Needed"', '"$ fwupdmgr get-updates"'])
+		notify_send_msg = [r"XUSERS=($(who|grep -E '\(:[0-9](\.[0-9])*\)' |awk '{print $1$NF}'|sort -u)); for XUSER in ${XUSERS[@]}; do NAME=(${XUSER/(/ }); DISPLAY=${NAME[1]/)/}; DBUS_ADDRESS=unix:path=/run/user/$(id -u ${NAME[0]})/bus; sudo -u ${NAME[0]} DISPLAY=${DISPLAY} DBUS_SESSION_BUS_ADDRESS=${DBUS_ADDRESS} PATH=${PATH} notify-send 'Firmware Update Needed' 'Run terminal commmand to update firmware: \n\n$ fwupdmgr upgrade'; done"]
+		notify_send_cmd(notify_send_msg)
 		subprocess.call(['echo', '***fwupdmgr update is available***'])
 		return 0
+
+
+def notify_send_cmd(command):
+    """
+    Executes a shell command and returns its output.
+    """
+    try:
+        # shell=True allows passing the command as a single string
+        # capture_output=True captures stdout and stderr
+        # text=True decodes stdout and stderr as text using default encoding
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, check=True)
+        print("Command executed successfully:")
+        print("Stdout:", result.stdout)
+        if result.stderr:
+            print("Stderr:", result.stderr)
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing command: {e}")
+        print("Stderr:", e.stderr)
+        return None
+
 
 
 if __name__ == '__main__':
