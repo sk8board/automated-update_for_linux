@@ -2,7 +2,7 @@
 Description=utomated Update Service
 Requires=network-online.target
 After=network-online.target
-StartLimitIntervalSec=5min
+StartLimitIntervalSec=infinity
 StartLimitBurst=4
 
 [Service]
@@ -12,4 +12,4 @@ CPUWeight=20
 IOWeight=20
 Restart=on-failure
 RestartSec=1min
-ExecStart=/usr/lib/automated-update/automated-update.py
+ExecStart=/usr/bin/automated-update
