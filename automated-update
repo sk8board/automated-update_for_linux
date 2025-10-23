@@ -3,9 +3,15 @@
 from pathlib import Path
 import subprocess
 import time
+import os
 
 
 def main():
+	
+	# notify and exit if not being run as root
+	if os.geteuid() != 0:
+		subprocess.call(['echo', '***root privileges are required***'])
+		exit(0)
 	
 	global counter
 	counter = 0
@@ -18,7 +24,7 @@ def main():
 			if Path('/usr/bin/apt-get').exists() == True:
 										
 				# 0 = update completed
-				if process_apt_update() + process_apt_upgrade() + process_flatpak() == 0:
+				if process_apt_update() == 0 and process_apt_upgrade() == 0 and process_flatpak() == 0:
 					process_fwupdmgr()
 					subprocess.call(['echo', '***automated update complete***'])
 					exit(0)
@@ -31,7 +37,7 @@ def main():
 			elif Path('/usr/bin/dnf').exists() == True:	
 				
 				# 0 = update completed
-				if process_dnf() + process_flatpak() == 0:
+				if process_dnf() == 0 and process_flatpak() == 0:
 					process_fwupdmgr()
 					subprocess.call(['echo', '***automated update complete***'])
 					exit(0)
@@ -44,7 +50,7 @@ def main():
 			elif Path('/usr/bin/pacman').exists() == True:	
 				
 				# 0 = update completed
-				if process_pacman() + process_flatpak() == 0:
+				if process_pacman() == 0 and process_flatpak() == 0:
 					process_fwupdmgr()
 					subprocess.call(['echo', '***automated update complete***'])
 					exit(0)
@@ -249,7 +255,7 @@ def process_fwupdmgr():
 	
 	else:
 		# send notification that a firmware update is available
-		subprocess.call(["/usr/bin/notify-send-as-root", r"Firmware Update Needed", r"Run terminal commmand to update firmware: \n\n$ fwupdmgr upgrade"])
+		subprocess.call(["/usr/bin/notify-send-as-root", r"Firmware Update Needed", r"Run terminal command to update firmware: \n\n$ fwupdmgr upgrade"])
 		subprocess.call(['echo', '***fwupdmgr update is available***'])
 		return 0
 
