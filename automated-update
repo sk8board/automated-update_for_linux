@@ -95,24 +95,25 @@ def process_apt_update():
 	exit_code = subprocess.call(['/usr/bin/apt-get', 'update', '--assume-no'])	
 	
 	if exit_code == 0:
-		subprocess.call(['echo', '***apt updates are not available at this time***'])
+		subprocess.call(['echo', '***apt-get updates are not available at this time***'])
 		return 0
 			
 	else:	
 		# perform apt updates
 		subprocess.call(['echo', '***apt-get update***'])
 		subprocess.call(['/usr/bin/systemd-inhibit', '--why="Performing automatic updates"', '--who="Update Manager"', '--what=shutdown', '--mode=block', '/usr/bin/apt-get', 'update', '-y'])	# provide the exit code of apt-get update command
-		subprocess.call(['echo', '***apt update has completed***'])
+		subprocess.call(['echo', '***apt-get update has completed***'])
 		
 		# get exit code for 'apt-get update' to check if updates are available, 0 = no updates available
 		subprocess.call(['echo', '***apt-get check available update***'])
 		exit_code = subprocess.call(['/usr/bin/apt-get', 'update', '--assume-no'])	
 		
 		if exit_code == 0:
-			subprocess.call(['echo', '***apt updates are not available at this time***'])
+			subprocess.call(['echo', '***apt-get updates are not available at this time***'])
 			return 0
 			
 		else:
+			subprocess.call(['echo', '***apt-get update exit code != 0***'])
 			return 1		
 
 
@@ -120,7 +121,7 @@ def process_apt_upgrade():
 	
 	if Path('/usr/bin/mintupdate-cli').exists() == True:
 		
-		process_mint()
+		return process_mint()
 		
 	else:
 	
@@ -129,7 +130,7 @@ def process_apt_upgrade():
 		exit_code = subprocess.call(['/usr/bin/apt-get', 'dist-upgrade', '--assume-no'])	
 		
 		if exit_code == 0:
-			subprocess.call(['echo', '***apt dist-upgrades are not available at this time***'])
+			subprocess.call(['echo', '***apt-get dist-upgrades are not available at this time***'])
 			return 0
 			
 		else:
@@ -147,10 +148,11 @@ def process_apt_upgrade():
 			exit_code = subprocess.call(['/usr/bin/apt-get', 'dist-upgrade', '--assume-no'])	
 			
 			if exit_code == 0:
-				subprocess.call(['echo', '***apt dist-upgrades are not available at this time***'])
+				subprocess.call(['echo', '***apt-get dist-upgrades are not available at this time***'])
 				return 0	
 			
 			else:
+				subprocess.call(['echo', '***apt-get dist-upgrades exit code != 0***'])
 				return 1
 
 
@@ -188,6 +190,7 @@ def process_dnf():
 			return 0	
 			
 		else:
+			subprocess.call(['echo', '***dnf check-upgrade exit code != 0***'])
 			return 1	
 
 
