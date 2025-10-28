@@ -221,6 +221,7 @@ def process_flatpak():
 		
 		subprocess.call(['echo', '***mintupdate-launcher***'])
 		subprocess.call(['mintupdate-launcher'])
+		return 0
 
 	else:
 
