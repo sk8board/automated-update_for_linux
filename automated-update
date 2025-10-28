@@ -215,7 +215,43 @@ def process_mint():
 	return 0
 
 
+def process_cinnamon():
+	
+	# code taken from mintupdate-launcher
+	subprocess.call(['echo', '***cinnamon updates***'])
+	try:
+		import cinnamon
+		updater = cinnamon.UpdateManager()
+		updater.refresh_all_caches()
+		updates = updater.get_updates()
+		if len(updates) > 0:
+			msg = _("The following spices were automatically updated:")
+			msg = msg + "\n"
+			for update in updates:
+				updater.upgrade(update)
+				msg += "\n- %s (%s)" % (update.uuid, update.spice_type)
+	
+			if xapp.os.is_desktop_cinnamon():
+				subprocess.call(["cinnamon-dbus-command", "RestartCinnamon", "0"])
+				time.sleep(10) # Give cinnamon some time, otherwise it won't show our notification.
+				notification_title = _("Cinnamon was restarted")
+				notification = Notify.Notification.new(notification_title, msg, "cinnamon-symbolic")
+				notification.set_urgency(2)
+				notification.set_timeout(Notify.EXPIRES_NEVER)
+				notification.show()
+	except Exception as e:
+		print("An error occurred while updating cinnamon spices: %s" % e)
+	return 0
+
+
 def process_flatpak():
+
+	# check if cinnamon is installed
+	if Path("/usr/bin/cinnamon").exists() == True:
+		process_cinnamon()
+	else:
+		subprocess.call(['echo', '***cinnamon is not installed***'])
+
 
 	if Path('/usr/bin/mintupdate-launcher').exists() == True:
 		
