@@ -252,40 +252,31 @@ def process_flatpak():
 	else:
 		subprocess.call(['echo', '***cinnamon is not installed***'])
 
+	# check if flatpak is installed
+	if Path('/usr/bin/flatpak').exists() == False:
+		subprocess.call(['echo', '***flatpak is not installed***'])
+		return 0
 
-	if Path('/usr/bin/mintupdate-launcher').exists() == True:
-		
-		subprocess.call(['echo', '***mintupdate-launcher***'])
-		subprocess.call(['mintupdate-launcher'])
+	# get exit code for 'flatpak remote-ls --updates', check if updates are available, 0 = no updates available
+	subprocess.call(['echo', '***flatpak remote-ls --updates***'])
+	exit_code = subprocess.call(['/usr/bin/flatpak', 'remote-ls', '--updates'])	
+
+	# NEED TO FIX exit code always returns zero
+
+	if exit_code == 1:
+		subprocess.call(['echo', '***flatpak updates are not available at this time***'])
 		return 0
 
 	else:
+		# uninstall unused flatpaks
+		subprocess.call(['echo', '***flatpak uninstall --unused***'])
+		subprocess.call(['flatpak', 'uninstall', '--unused', '-y'])
 
-		# check if flatpak is installed
-		if Path('/usr/bin/flatpak').exists() == False:
-			subprocess.call(['echo', '***flatpak is not installed***'])
-			return 0
-		
-		# get exit code for 'flatpak remote-ls --updates', check if updates are available, 0 = no updates available
-		subprocess.call(['echo', '***flatpak remote-ls --updates***'])
-		exit_code = subprocess.call(['/usr/bin/flatpak', 'remote-ls', '--updates'])	
-		
-		# NEED TO FIX exit code always returns zero
-		
-		if exit_code == 1:
-			subprocess.call(['echo', '***flatpak updates are not available at this time***'])
-			return 0
-			
-		else:
-			# uninstall unused flatpaks
-			subprocess.call(['echo', '***flatpak uninstall --unused***'])
-			subprocess.call(['flatpak', 'uninstall', '--unused', '-y'])
-			
-			# perform flatpak updates
-			subprocess.call(['echo', '***flatpak update***'])
-			subprocess.call(['/usr/bin/systemd-inhibit', '--why="Performing automatic updates"', '--who="Update Manager"', '--what=shutdown', '--mode=block', '/usr/bin/flatpak', 'update', '-y'])	# provide the exit code of flatpak update command
-			subprocess.call(['echo', '***flatpak update has completed***'])
-			return 0
+		# perform flatpak updates
+		subprocess.call(['echo', '***flatpak update***'])
+		subprocess.call(['/usr/bin/systemd-inhibit', '--why="Performing automatic updates"', '--who="Update Manager"', '--what=shutdown', '--mode=block', '/usr/bin/flatpak', 'update', '-y'])	# provide the exit code of flatpak update command
+		subprocess.call(['echo', '***flatpak update has completed***'])
+		return 0
 				
 
 def process_fwupdmgr():
@@ -309,4 +300,3 @@ def process_fwupdmgr():
 
 if __name__ == '__main__':
     main()
-
