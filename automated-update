@@ -161,7 +161,7 @@ def process_dnf():
 	# get exit code for 'dnf check-upgrade', check if upgrades are available, 0 = no updates available
 	try:
 		subprocess.call(['echo', '***dnf check available upgrades***'])
-		exit_code = subprocess.call(['/usr/bin/dnf', 'check-upgrade'])	
+		exit_code = subprocess.call(['/usr/bin/dnf', 'check-upgrade', '--refresh'])	
 	except Exception as e:
 		print(e)
 		exit_code = 0
