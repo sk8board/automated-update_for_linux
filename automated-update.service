@@ -2,7 +2,7 @@
 Description=Automated Update Service
 Requires=network-online.target
 After=network-online.target
-StartLimitIntervalSec=infinity
+StartLimitIntervalSec=3h
 StartLimitBurst=4
 
 [Service]
