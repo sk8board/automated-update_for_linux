@@ -2,4 +2,4 @@
 
 Perform automatic software updates and inform of needed BIOS firmware updates
 
-### Do Not Use - work in progress
+### work in progress
