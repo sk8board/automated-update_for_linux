@@ -3,3 +3,4 @@
 Perform automatic software updates and inform of needed BIOS firmware updates
 
 ### work in progress
+Fedora, Ubuntu, Debian
