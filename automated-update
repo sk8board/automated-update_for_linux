@@ -10,7 +10,7 @@ def main():
 	
 	# notify and exit if not being run as root
 	if os.geteuid() != 0:
-		subprocess.call(['echo', '***root privileges are required***'])
+		subprocess.call(['echo', '***sudo/root privilege is required***'])
 		exit(0)
 	
 	global counter
